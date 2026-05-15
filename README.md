@@ -1,7 +1,7 @@
 This repository demonstrates a method to automate the installation process for the lab computers in my company.
 For privacy and security reasons, some parts have been removed or modified.
 
-![Topology](https://github.com/user-attachments/assets/8441bc7a-ecab-4555-b615-0ce1d9ff8904)
+<img width="1266" height="606" alt="451425445-8441bc7a-ecab-4555-b615-0ce1d9ff8904" src="https://github.com/user-attachments/assets/16b6e847-3150-4a3c-931a-0ddca346945f" />
 
 Steps with information:
 
