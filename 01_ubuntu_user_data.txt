@@ -1,0 +1,50 @@
+#cloud-config
+######################################################################################################
+# This cloud-init file for zero-touch installation of Ubuntu 22-24.4
+# @author Mac Müller 
+# Date: 15.05.2026
+# https://www.linkedin.com/in/mac-mueller/
+# https://github.com/macivo/
+######################################################################################################
+
+#cloud-config
+autoinstall:
+  version: 1
+
+  identity:
+    hostname: hostXYZ
+    username: mac
+    password: "$6$29x/P3Xgna8CxMpn$FVGH7xx4nZfhl.MztwA3lcuSnIJ999.zm49GK61lvrPf8EiiTYoqrpHtcoVhDj75qyv999999999e/qr999999/"
+    realname: Mac Müller
+
+  locale: en_US.UTF-8
+  timezone: Europe/Zurich
+
+  keyboard:
+    layout: ch
+    variant: legacy
+
+  ssh:
+    install-server: true
+    allow-pw: true
+
+  apt:
+    primary:
+      - arches: [default]
+        uri: http://200.0.0.99/ubuntu
+
+  storage:
+    layout:
+      name: lvm
+
+  kernel:
+    package: linux-generic
+
+  updates: security
+
+  packages:
+    - python3
+
+  late-commands:
+    - mkdir /target/init
+    - cp /cdrom/init.py /target/init/init.py
