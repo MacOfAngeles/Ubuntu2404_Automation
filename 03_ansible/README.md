@@ -1,4 +1,4 @@
-# Ansible System Setup
+# 🚀Ansible System Setup
 
 This repository provides a fully automated setup for Ubuntu OS 24.04.4 LTS using Ansible.
 The system is designed for train signal simulation and runs the required applications within Docker containers.
@@ -21,7 +21,7 @@ Delivery State - After execution of the automation scripts:
 - No further setup steps are required
 - The system is ready for lab use or customer delivery
 
-## Features
+## 🚀Features
 - User management
 - OS configuration
 - Desktop setup (XFCE)
@@ -40,8 +40,9 @@ Delivery State - After execution of the automation scripts:
 
 ```bash
 ansible-playbook playbooks/site.yml -i inventory/hosts.yml
-
-📦 Full Ansible Repository Structure
+````
+### 📦 Full Ansible Repository Structure
+```bash
 03_ansible/
 ├── ansible.cfg
 ├── inventory/
