@@ -26,6 +26,7 @@ Supports deployment in two network segments with fully automatic configuration a
 ## 🛠Usage Guide
 1. Variables for configurations
     - 01_ubuntu_user_data.txt (IP address for mirror, password)
+    - 02_init_py (DNS address)
     - 03_ansible/group_vars/all.yml (all ansible variables)
 2. Perform the automated installation using cloud-init
 3. Log in with the user account: tool
