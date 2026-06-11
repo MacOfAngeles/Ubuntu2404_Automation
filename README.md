@@ -1,4 +1,4 @@
-## Info
+## 🚀Info
 
 This repository demonstrates the fast deployment of Ubuntu 24.04.4 LTS.
 
@@ -21,9 +21,9 @@ Supports deployment in two network segments with fully automatic configuration a
 4. Install Docker and Docker Compose
 - Enable SSH communication between containers
 5. Privacy and Security Notice
-- For privacy and security reasons, some parts of this repository have been removed or modified
+- 🔒 For privacy and security reasons, some parts of this repository have been removed or modified
 
-## Usage Guide
+## 🛠Usage Guide
 1. Variables for configurations
 - 01_ubuntu_user_data.txt (IP address for mirror, password)
 - 03_ansible/group_vars/all.yml (all ansible variables)
