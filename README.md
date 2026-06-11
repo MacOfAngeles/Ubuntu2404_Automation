@@ -11,22 +11,22 @@ Supports deployment in two network segments with fully automatic configuration a
 
 ## Steps and Information
 1. Offline Ubuntu Noble 24.04 Zero-Touch Installation with cloud-init
-- Use our own offline mirror
-- Perform a minimal desktop installation
-- Keep the system as minimal as possible; install only what is truly required
-- Configure VNC with the Xfce desktop environment using tightvncserver for remote desktop access
+    - Use our own offline mirror
+    - Perform a minimal desktop installation
+    - Keep the system as minimal as possible; install only what is truly required
+    - Configure VNC with the Xfce desktop environment using tightvncserver for remote desktop access
 2. Configure Hostname and Static IP Address with Python
-- Run the Python script with sudo privileges only
+    - Run the Python script with sudo privileges only
 3. Set Up the Test Environment with Ansible
 4. Install Docker and Docker Compose
-- Enable SSH communication between containers
+    - Enable SSH communication between containers
 5. Privacy and Security Notice
-- 🔒 For privacy and security reasons, some parts of this repository have been removed or modified
+    - 🔒For privacy and security reasons, some parts of this repository have been removed or modified
 
 ## 🛠Usage Guide
 1. Variables for configurations
-- 01_ubuntu_user_data.txt (IP address for mirror, password)
-- 03_ansible/group_vars/all.yml (all ansible variables)
+    - 01_ubuntu_user_data.txt (IP address for mirror, password)
+    - 03_ansible/group_vars/all.yml (all ansible variables)
 2. Perform the automated installation using cloud-init
 3. Log in with the user account: tool
 4. Run sudo /init/init.py to configure the hostname and IP address
