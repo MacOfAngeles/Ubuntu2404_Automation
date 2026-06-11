@@ -21,7 +21,7 @@ def get_gateway(ip: str, prefix: str) -> str:
 
 def get_dns_server(ip: str) -> str:
     """Return DNS IP based on network range."""
-    return "200.0.0.1" if ip.startswith("200.0.0") else "10.222.22.3"
+    return "x.x.x.1" if ip.startswith("x.x.x") else "y.y.y.3"
 
 
 def write_netplan(config: dict) -> None:
