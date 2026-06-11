@@ -1,0 +1,61 @@
+# Users
+user_admin: admin
+user_tool: tool
+user_docker: docker_user
+
+# Secrets 
+vault_admin_password: 'REPLACE_ME'
+vault_user_password: 'REPLACE_ME'
+vault_ssh_public_key: 'ssh-rsa AAAA...'
+
+# VNC
+vnc_password: 'REPLACE_ME'
+
+# Paths
+base_dir: /workspace
+opt_dir: /opt
+firefox_archive: /workspace/software/firefox/firefox-esr.tar.bz2
+local_remmina_path: /home/docker_user/.local/share/remmina/
+remote_path: /workspace/configuration/system
+
+# Network identifiers
+network_a_prefix: 'X.X.X'
+network_b_prefix: 'Y.Y.Y'
+
+# Patching
+app_ui_new: 'app-ui-v1.0.0'
+app_ui_old: 'app-ui-v1.0.0'
+tool_a_new: 'tool-a-v1.0'
+tool_a_old: 'tool-a-v0.9'
+tool_b_new: 'tool-b-v1.0'
+tool_b_old: 'tool-b-v1.0'
+toolkit_new: 'toolkit-v0.5'
+toolkit_old: 'toolkit-v0.4'
+
+
+date: "{{ lookup('pipe', 'date +%d.%m.%Y_%H:%M:%S') }}"
+
+# two netsworks variables
+url_mirror: >-
+  {{ 'http://X.X.X.X/ubuntu/'
+      if ansible_default_ipv4.address.startswith('X.X.X')
+      else 'http://Y.Y.Y.Y/ubuntu/' }}
+
+dynamic_var:   
+  network_a:
+    fstab_el2: "//X.X.X.X/share_a /app_data cifs rw,uid=docker_user,gid=users,username=docker_user,password={{ cifs_password }} 0 0"
+    fstab_ve2: "//X.X.X.X/share_b /workspace cifs rw,uid=docker_user,gid=users,username=docker_user,password={{ cifs_password }} 0 0"
+    ipdns: 'X.X.X.1'
+    url_repo_server: 'X.X.X.7\trepo.internal.local'
+
+  network_b:
+    fstab_el2: "//Y.Y.Y.Y/share_a /app_data cifs rw,uid=docker_user,gid=users,username=docker_user,password={{ cifs_password }} 0 0"
+    fstab_ve2: "//Y.Y.Y.Y/share_b /workspace cifs ro,uid=docker_user,gid=users,username=docker_user,password={{ cifs_password }} 0 0"
+    ipdns: 'Y.Y.Y.1'
+    url_repo_server: 'Y.Y.Y.7\trepo.internal.local'    
+
+network: "{{ 'network_a' if ansible_default_ipv4.address.startswith('X.X.X') else 'network_b' }}"
+fstab_el2: "{{ dynamic_var[network]['fstab_el2'] }}"
+fstab_ve2: "{{ dynamic_var[network]['fstab_ve2'] }}"      
+ip_dns: "{{ dynamic_var[network]['ipdns'] }}"
+url_repo_server: "{{ dynamic_var[network]['url_repo_server'] }}"

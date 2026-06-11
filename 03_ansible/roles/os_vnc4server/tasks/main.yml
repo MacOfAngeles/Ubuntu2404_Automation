@@ -1,0 +1,63 @@
+# -*- coding: utf-8 -*-
+#############################
+# VNC server configurations #
+#############################
+
+- debug: 
+    msg: '######### os_vnc4server ##########'  
+
+  ## Configure vnc4server -------------------------------------------------------------------------------------------#
+- debug: 
+    msg: INFO set up vnc server
+
+- name: 'Operating system: Copy vnc files'
+  ansible.builtin.copy:
+    src: '/workspace/configuration/vnc/.vnc'
+    dest: '/home/docker_user/'
+    mode: '0775'
+  remote_user: docker_user
+  become: false
+
+- name: 'Operating system: Change permission for password file'
+  ansible.builtin.file:
+    path: '/home/docker_user/.vnc/passwd'
+    state: file
+    owner: docker_user
+    mode: '0600'
+  remote_user: docker_user
+  become: false   
+
+- name: 'Operating system: Change permission for xstartup file'
+  ansible.builtin.file:
+    path: '/home/docker_user/.vnc/xstartup'
+    state: file
+    owner: docker_user
+    group: users
+    mode: '0555'
+  remote_user: docker_user
+  become: false  
+
+- name: 'Operating system: Configure VNC password'
+  ansible.builtin.expect:
+    command: vncpasswd
+    responses:
+      '(?i)Password:': '{{ vnc_password }}'
+      '(?i)Verify:': '{{ vnc_password }}'
+      '(?i)Would you like to enter a view-only password (y/n)?:': 'n'
+  remote_user: docker_user
+  become: false
+
+- name: 'Operating system: Copy vncserver service file'
+  ansible.builtin.copy:
+    src: '/workspace/configuration/vnc/vncserver@.service'
+    dest: '/etc/systemd/system/vncserver@.service'
+    mode: '0775'
+    remote_src: true
+    force: true
+
+- name: 'Operating system: Reload systemd'
+  ansible.builtin.shell: 'systemctl daemon-reload'
+
+- name: 'Operating system: Enable vncserver service on boot'
+  ansible.builtin.shell: 'systemctl enable vncserver@{{ item }}'
+  loop: [1, 2, 3]

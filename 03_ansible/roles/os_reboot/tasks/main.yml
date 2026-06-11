@@ -1,0 +1,45 @@
+# -*- coding: utf-8 -*-
+##########
+# Reboot #
+##########
+
+- debug: 
+    msg: '######### os_reboot ##########' 
+
+## Set date after running first part
+- name: 'Operating system: Update date in automation log'
+  ansible.builtin.ini_file:
+      dest: '/var/log/automation.log'
+      section: DEFAULT
+      option: date
+      value: '{{ date }}'
+  tags: configuration
+
+# REBOOT SYSTEM -----------------------------------------------------------------------------------------------------#
+- debug: 
+    msg: Rebooting
+
+- name: 'Check uptime prior reboot of {{ ansible_hostname }}'
+  ansible.builtin.shell: 'uptime'
+  register: uptime_pre_reboot
+
+- debug: 
+    msg: '{{ uptime_pre_reboot.stdout }}'
+
+- name: 'Operating system: Schedule reboot for {{ ansible_hostname }}'
+  ansible.builtin.shell: 'shutdown -r +1'
+  ignore_errors: true
+
+- name: 'Operating system: Wait for system to become reachable'
+  ansible.builtin.wait_for_connection:
+    delay: 120
+
+- name: 'Check uptime post reboot of {{ ansible_hostname }}'
+  ansible.builtin.shell: 'uptime'
+  register: uptime_post_reboot
+
+- debug: 
+    msg: '{{ uptime_post_reboot.stdout }}'
+
+- debug: 
+    msg: 'INFO Welcome, setup finished successfully on {{ date }}'

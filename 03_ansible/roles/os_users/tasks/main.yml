@@ -1,0 +1,119 @@
+# -*- coding: utf-8 -*-
+###############################
+# User accounts configuration #
+###############################
+
+- debug: 
+    msg: '######### os_users ##########'  
+
+  ## CREATE AND CONFIGURE USERS -------------------------------------------------------------------------------------#
+- debug: 
+    msg: 'INFO starting to create and configure users'
+
+# TAT: step included. 
+- name: 'Operating system: Ensure some group exists'
+  ansible.builtin.group:
+    name: '{{ item }}'
+    state: present
+  loop: ['fuse', 'kvm', 'libvirtd', 'autologin']
+
+# TAT: step included. 
+- name: 'Operating system: Add custom group with fixed id'
+  ansible.builtin.group:
+    name: app_group
+    gid: 270
+
+# TAT: step included. 
+- name: 'Operating system: Set kvm device group permission'
+  ansible.builtin.file:
+    path: '/dev/kvm'
+    group: 'kvm'
+    mode: 'g+rw'
+
+- name: 'Operating system: Add a new user named {{ user_admin }}'
+  ansible.builtin.user:
+    name: '{{ user_admin }}'
+    password: '{{ vault_admin_password }}'
+    groups: ['adm', 'dialout', 'docker', 'app_group', 'fuse', 'kvm', 'libvirtd', 'sudo']
+    comment: 'System Administrator'
+    generate_ssh_key: true
+    ssh_key_bits: 2048
+    ssh_key_file: '.ssh/id_rsa'
+    append: true
+    update_password: always
+
+- name: 'Operating system: Add a new user named {{ user_docker }}'
+  ansible.builtin.user:
+    name: '{{ user_docker }}'
+    group: app_group
+    password: '{{ vault_user_password }}'
+    groups: ['adm', 'dialout', 'docker', 'app_group', 'fuse', 'kvm', 'libvirtd']
+    generate_ssh_key: true
+    ssh_key_bits: 2048
+    ssh_key_file: '.ssh/id_rsa'
+    comment: 'Application User'
+    uid: 255
+
+- name: 'Operating system: Set authorized key for admin'
+  ansible.builtin.authorized_key:
+    user: admin
+    state: present
+    key: '{{ vault_ssh_public_key }}'
+
+- name: 'Operating system: Set authorized key for docker user'
+  ansible.builtin.authorized_key:
+    user: docker_user
+    state: present
+    key: '{{ vault_ssh_public_key }}'
+
+- name: 'Operating system: Create automatic login configuration'
+  ansible.builtin.blockinfile:
+    path: /usr/share/lightdm/lightdm.conf.d/50-autologin.conf
+    create: true
+    marker_begin: 'START AUTOLOGIN'
+    marker_end: 'END AUTOLOGIN'
+    content: |
+      [SeatDefaults]
+      user-session=xfce
+      allow-guest=false
+      autologin-user=docker_user
+      autologin-user-timeout=0
+
+- name: 'Operating system: Remove default greeter configuration'
+  ansible.builtin.file:
+    path: /usr/share/lightdm/lightdm.conf.d/50-unity-greeter.conf
+    state: absent
+
+- name: 'Operating system: Set bash shell for users'
+  ansible.builtin.user:
+    name: '{{ item }}'
+    shell: /bin/bash
+  loop: ['tool', 'admin', 'docker_user']
+
+- name: 'Operating system: Hide system user from login screen'
+  ansible.builtin.copy:
+    dest: /var/lib/AccountsService/users/tool
+    content: |
+      [User]
+      SystemAccount=true
+
+- name: 'Operating system: Hide admin user from login screen'
+  ansible.builtin.copy:
+    dest: /var/lib/AccountsService/users/admin
+    content: |
+      [User]
+      SystemAccount=true
+
+- name: 'Operating system: Show docker user on login screen'
+  ansible.builtin.copy:
+    dest: /var/lib/AccountsService/users/docker_user
+    content: |
+      [User]
+      XSession=xfce4
+      SystemAccount=false
+
+- name: 'Operating system: Set network waiting on boot to 5 seconds'
+  ansible.builtin.lineinfile:
+    path: /etc/systemd/system/network-online.target.wants/systemd-networkd-wait-online.service
+    regexp: '^(.*)ExecStart=/usr/lib/systemd/systemd-networkd-wait-online(.*)$' 
+    line: 'ExecStart=/usr/lib/systemd/systemd-networkd-wait-online --timeout=5'

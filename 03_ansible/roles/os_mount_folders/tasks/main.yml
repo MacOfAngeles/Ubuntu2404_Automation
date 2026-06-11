@@ -1,0 +1,90 @@
+# -*- coding: utf-8 -*-
+##################################
+# Setup folders for mount points #
+##################################
+
+- debug: 
+    msg: '######### os_mount_folders ##########'  
+
+  ## Setup folder for mount points ----------------------------------------------------------------------------------#
+- debug: 
+    msg: 'INFO setup directory and mountpoint'
+
+- name: 'Operating system: Unmount (if mounted)'
+  ansible.builtin.mount:
+    path: '{{ item }}'
+    state: unmounted
+  loop:
+    - /app_data
+    - /data_mount
+    - /workspace
+
+- name: 'Create all required directories'
+  ansible.builtin.file:
+    path: '{{ item }}'
+    state: directory
+    owner: docker_user
+    group: users
+    mode: '0775'
+  loop:
+    - /app_data
+
+    # base structure
+    - /data_local/project/env/transfer/flash/site
+    - /data_mount
+
+    # transfer structure
+    - /project/env/transfer/flash/site/tools/tool_a
+    - /project/env/transfer/flash/site/tools/tool_b
+    - /project/env/transfer/logs
+
+    # virtualization base
+    - /vm/env1
+    - /vm/tools
+    - /vm/nodes/site
+    - /vm/lab
+
+    # vm/tools/*
+    - /vm/tools/tool_a
+    - /vm/tools/tool_b
+    - /vm/tools/security
+    - /vm/tools/testsuite
+    - /vm/tools/git
+
+    # vm/lab/node0x
+    - /vm/lab/node00
+    - /vm/lab/node01
+    - /vm/lab/node02
+    - /vm/lab/node03
+    - /vm/lab/node04
+
+# Offline Elektra
+
+- name: 'Operating system: Ensure that /app_data is unmounted'
+  ansible.builtin.command: 'mountpoint /app_data'
+  register: mount_stat
+  failed_when: mount_stat.stdout.endswith('is a mountpoint')
+
+- name: 'Operating system: Delete /app_data'
+  ansible.builtin.file:
+    path: /app_data
+    state: absent
+  failed_when: mount_stat.stdout.endswith('is a mountpoint')
+
+- name: 'Waiting: wait untill /app_data deleted' 
+  wait_for:
+    path: /app_data
+    state: absent
+
+- name: 'Create application symlinks'
+  ansible.builtin.file:
+    src: '{{ item.src }}'
+    dest: '{{ item.dest }}'
+    state: link
+  loop:
+    - { src: '/data_mount', dest: '/app_data' }
+    - { src: '/data_local/project', dest: '/data_mount/project' }
+
+- name: 'Operating system: Mount all new mountpoints'
+  ansible.builtin.command: 'mount -a'
+  ignore_errors: yes

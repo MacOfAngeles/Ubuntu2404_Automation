@@ -1,0 +1,98 @@
+# -*- coding: utf-8 -*-
+###########################
+# Install Firefox offline #
+###########################
+
+- debug: 
+    msg: '######### os_firefox ##########'
+
+## install firefox ----------------------------------------------------------------------------#
+
+- name: 'Firefox installation: Remove previous Firefox'
+  ansible.builtin.file:
+    path: '{{ opt_dir }}/firefox'
+    state: absent
+
+- name: 'Firefox installation: Ensure install directory exists'
+  ansible.builtin.file:
+    path: '{{ opt_dir }}'
+    state: directory
+    mode: '0755'
+
+- name: 'Firefox installation: Extract Firefox'
+  ansible.builtin.unarchive:
+    src: '{{ firefox_archive }}'
+    dest: '{{ opt_dir }}'
+    remote_src: true
+
+- name: 'Firefox installation: Create Firefox policy directory'
+  ansible.builtin.file:
+    path: '{{ opt_dir }}/firefox/distribution'
+    state: directory
+    mode: '0755'
+
+- name: 'Firefox installation: Configure Firefox policies'
+  ansible.builtin.copy:
+    dest: '{{ opt_dir }}/firefox/distribution/policies.json'
+    content: |
+      {
+        'policies': {
+          'Certificates': {
+            'ImportEnterpriseRoots': true,
+            'Install': [
+              '/usr/local/share/ca-certificates/custom_root_ca.crt'
+            ]
+          }
+        }
+      }
+    owner: root
+    group: root
+    mode: '0644'
+    
+- name: 'Firefox installation: Create Firefox XFCE menu entry'
+  ansible.builtin.copy:
+    dest: /usr/share/applications/firefox.desktop
+    mode: '0644'
+    content: |
+      [Desktop Entry]
+      Version=1.0
+      Name=Firefox Web Browser
+      Comment=Browse the Web
+      Exec=/opt/firefox/firefox %u
+      Icon=/opt/firefox/browser/chrome/icons/default/default128.png
+      Terminal=false
+      Type=Application
+      Categories=Network;WebBrowser;Internet;
+
+- name: 'Firefox installation: Manage Firefox offline host overrides'
+  ansible.builtin.blockinfile:
+    path: /etc/hosts
+    marker: '# {mark} ANSIBLE FIREFOX HOSTS'
+    block: |
+      127.0.0.1 mozilla.org
+      127.0.0.1 detectportal.firefox.com
+      127.0.0.1 firefox.settings.services.mozilla.com
+    create: true
+
+- name: 'Firefox installation: Configure NSS (fast + mDNS + DNS)'
+  ansible.builtin.copy:
+    dest: /etc/nsswitch.conf
+    mode: '0644'
+    content: |
+      passwd: files
+      group: files
+      shadow: files
+
+      hosts: files mdns4_minimal [NOTFOUND=return] dns
+
+      networks: files
+      protocols: db files
+      services: db files
+      ethers: db files
+      rpc: db files
+
+- name: 'Firefox installation: Ensure minimal mDNS package installed'
+  ansible.builtin.apt:
+    name: libnss-mdns
+    state: present
+    install_recommends: false

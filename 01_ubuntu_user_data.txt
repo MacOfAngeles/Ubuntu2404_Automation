@@ -13,7 +13,7 @@ autoinstall:
 
   identity:
     hostname: hostXYZ
-    username: mac
+    username: tool
     password: "$6$29x/P3Xgna8CxMpn$FVGH7xx4nZfhl.MztwA3lcuSnIJ999.zm49GK61lvrPf8EiiTYoqrpHtcoVhDj75qyv999999999e/qr999999/"
     realname: Mac Müller
 

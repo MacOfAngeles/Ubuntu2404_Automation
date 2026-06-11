@@ -1,0 +1,23 @@
+# -*- coding: utf-8 -*-
+######################
+# SSH configurations #
+######################
+
+- debug: 
+    msg: '######### os_ssh ##########'
+
+  ## Set SSH lifecyle -----------------------------------------------------------------------------------------------#
+- debug: 
+    msg: 'INFO configure some SSH parameters'
+
+- name: 'Operating system: SSH lifecycle: Set parameter ClientAliveInterval in sshd_config'
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^(.*)ClientAliveInterval(.*)$'
+    line: 'ClientAliveInterval 30'
+
+- name: 'Operating system: SSH lifecycle: Set parameter ClientAliveCountMax in sshd_config'
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^(.*)ClientAliveCountMax(.*)$'
+    line: 'ClientAliveCountMax 3'

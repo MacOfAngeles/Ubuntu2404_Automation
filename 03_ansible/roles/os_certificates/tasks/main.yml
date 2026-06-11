@@ -1,0 +1,47 @@
+# -*- coding: utf-8 -*-
+##############################
+# Certificate configurations #
+##############################
+    
+- debug: 
+    msg: '######### os_certificates ##########'
+
+## set certificate for repo server ----------------------------------------------------------------------------#
+- name: 'Operating system: Copy certificates for repo server'
+  ansible.builtin.copy: 
+    src: '/workspace/certificates/{{ item }}' 
+    dest: '/usr/local/share/ca-certificates/{{ item }}'
+    force: true
+  loop:
+    - custom_root_ca.crt
+    - custom_intermediate_ca.crt
+
+- name: 'Operating system: Ensure Firefox policy directory exists'
+  ansible.builtin.file:
+    path: '{{ opt_dir }}/firefox/distribution'
+    state: directory
+    mode: '0755'
+
+- name: 'Operating system: Configure Firefox certificate policy'
+  ansible.builtin.copy:
+    dest: '{{ opt_dir }}/firefox/distribution/policies.json'
+    content: |
+      {
+        'policies': {
+          'Certificates': {
+            'ImportEnterpriseRoots': true,
+            'Install': [
+              '/usr/local/share/ca-certificates/custom_root_ca.crt'
+            ]
+          }
+        }
+      }
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: 'Operating system: Install certificates'
+  ansible.builtin.shell: 'update-ca-certificates'
+
+- name: 'Operating system: Restart docker'
+  ansible.builtin.shell: 'service docker restart'

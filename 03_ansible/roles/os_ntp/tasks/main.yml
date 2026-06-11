@@ -1,0 +1,52 @@
+# -*- coding: utf-8 -*-
+########################################
+# Configuration of ntp synchronisation #
+########################################
+
+  - debug: 
+      msg: '######### os_ntp ##########'
+
+  - debug: 
+      msg: INFO configure ntp synchronisation
+
+  - name: 'Operating system: Set ntp synchronisation network A'
+    ansible.builtin.shell: |
+      cat > /etc/ntp.conf <<_EOF_
+      driftfile /var/lib/ntp/ntp.drift
+      leapfile /usr/share/zoneinfo/leap-seconds.list
+      statistics loopstats peerstats clockstats
+      filegen loopstats file loopstats type day enable
+      filegen peerstats file peerstats type day enable
+      filegen clockstats file clockstats type day enable
+      server X.X.X.1 iburst
+      server X.X.X.2 iburst
+      restrict -4 default kod notrap nomodify nopeer noquery limited
+      restrict -6 default kod notrap nomodify nopeer noquery limited
+      restrict 127.0.0.1
+      restrict ::1
+      restrict source notrap nomodify noquery
+      _EOF_
+    when: ansible_default_ipv4.address.startswith('X.X.X')
+
+  - name: 'Operating system: Set ntp synchronisation network B'
+    ansible.builtin.shell: |
+      cat > /etc/ntp.conf <<_EOF_
+      driftfile /var/lib/ntp/ntp.drift
+      leapfile /usr/share/zoneinfo/leap-seconds.list
+      statistics loopstats peerstats clockstats
+      filegen loopstats file loopstats type day enable
+      filegen peerstats file peerstats type day enable
+      filegen clockstats file clockstats type day enable
+      server Y.Y.Y.1 iburst
+      restrict -4 default kod notrap nomodify nopeer noquery limited
+      restrict -6 default kod notrap nomodify nopeer noquery limited
+      restrict 127.0.0.1
+      restrict ::1
+      restrict source notrap nomodify noquery
+      _EOF_
+    when: ansible_default_ipv4.address.startswith('Y.Y.Y')
+
+  - name: 'Operating system: Restart service ntp'
+    ansible.builtin.service:
+      name: ntp
+      state: restarted

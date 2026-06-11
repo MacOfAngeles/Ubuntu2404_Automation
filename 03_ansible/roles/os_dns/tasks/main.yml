@@ -1,0 +1,58 @@
+# -*- coding: utf-8 -*-
+########################
+# Domain configuration #
+########################
+
+- debug: 
+    msg: '######### os_dns ##########'
+
+  ## Preparation for joining domain later ---------------------------------------------------------------------#
+- debug: 
+    msg: 'INFO modify parameters for domain configuration'
+
+- name: 'Domain: Modify /etc/hosts with correct hostnames'
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    regexp: '^(.*){{ ansible_hostname }}(.*)$' 
+    line: '{{ ansible_default_ipv4.address }}\t{{ ansible_hostname }} {{ ansible_hostname }}.internal.local'
+
+- name: 'Domain: Modify /etc/nsswitch.conf with correct DNS order'
+  ansible.builtin.lineinfile:
+    path: /etc/nsswitch.conf
+    regexp: '^(.*)hosts:(.*)$' 
+    line: 'hosts: files dns mdns4_minimal [NOTFOUND=return]'
+
+- name: 'Domain: Modify netplan configuration'
+  ansible.builtin.slurp:
+    path: /etc/netplan/50-cloud-init.yaml
+  register: netplan
+
+- name: 'Domain: Extract the data of netplan'
+  ansible.builtin.set_fact:
+    mydata: "{{ netplan['content'] | b64decode | from_yaml }}"
+
+- name: 'Domain: Config all other interfaces with dhcp4'
+  ansible.builtin.set_fact:
+    mydata: "{{ mydata | combine({'network':{'ethernets': {item: {'dhcp4': true}}}}, recursive=true) }}"
+  with_items: '{{ ansible_interfaces }}'  
+  when: not (item == ansible_default_ipv4.interface or item == 'lo')
+
+- name: 'Domain: Set domain settings for default interface'
+  ansible.utils.update_fact:
+    updates:
+      - path: mydata['network']['ethernets'][{{ ansible_default_ipv4.interface }}]['nameservers']
+        value: 
+          addresses: [ '{{ ip_dns }}' ]
+          search: [ internal.local ]
+  register: updated
+
+- name: 'Domain: Write the netplan configs'
+  ansible.builtin.copy:
+    content: '{{ updated.mydata | to_nice_yaml }}'
+    dest: /etc/netplan/50-cloud-init.yaml  
+
+- name: 'Domain: Add repo server in hosts file'
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    insertafter: '^(.*){{ ansible_hostname }}.internal.local(.*)$' 
+    line: '{{ url_repo_server }}'

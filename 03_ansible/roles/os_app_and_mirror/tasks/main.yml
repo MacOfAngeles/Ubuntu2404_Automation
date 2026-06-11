@@ -1,0 +1,166 @@
+# -*- coding: utf-8 -*-
+####################################################
+# Installation of applications and mirror settings #
+####################################################
+
+- debug: 
+    msg: '######### os_app_and_mirror ##########'
+
+- debug: 
+    msg: INFO configure offline mirror
+
+- name: 'Operating system: Setting offline mirror ubuntu links'
+  ansible.builtin.shell: |
+    cat > /etc/apt/sources.list.d/ubuntu.sources <<_EOF_
+    Types: deb
+    Trusted: yes
+    URIs: {{ url_mirror }}
+    Suites: noble noble-updates noble-backports noble-security
+    Components: main restricted universe multiverse
+    Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg    
+    _EOF_
+
+- name: 'Operating system: Update cache from offline mirror (only is more than 1 seconds ago)'
+  ansible.builtin.apt:
+    update_cache: true
+    force_apt_get: false
+    cache_valid_time: 1
+
+- debug: 
+    msg: INFO starting to install and remove packages
+
+- name: 'Operating system: Installing a list of packages (ubuntu)'   
+  ansible.builtin.apt:
+    name:
+      - python3
+      - python3-pip
+      - ntpsec
+      - ntp
+      - gparted
+      - git
+      - ethtool
+      - ansible
+      - linux-image-extra-virtual
+      - nfs-kernel-server
+      - nfs-common
+      - openssh-server
+      - bridge-utils
+      - emacs
+      - perl
+      - nano
+      # TAT: step included. cifs is used for clearcase mount
+      - cifs-utils
+      # TAT: step included. curl is needed for ebo2base.sh
+      - curl
+      # TAT: step included. docker-ce (by docker) gets removed by compose -> need to use docker.io (by ubuntu) package
+      - docker.io
+      - docker-compose
+      - containerd
+      # TAT: step included. qemu-package ensures udev rule for /dev/kvm is in place
+      - qemu-system-common
+      - qemu-kvm
+      - qemu-guest-agent
+      # TAT: VNC Zugriff
+      - python3-pexpect
+      - dbus-x11
+      - tightvncserver
+      - remmina
+      # xfce
+      - lightdm
+      - xfce4
+      - xfce4-goodies
+      - xclip
+      - autocutsel
+    state: present
+    
+# TAT: step included. 
+- name: 'Operating system: Installing ksmtuned without recommended packages'
+  ansible.builtin.apt:
+    name: ksmtuned
+    install_recommends: false
+
+- name: 'Operating system: Remove a list of obsolete packages'
+  ansible.builtin.apt:
+    name:
+      - ubuntu-report
+      - popularity-contest
+      - apport
+      - libreoffice
+      - thunderbird
+      - gnome-mahjongg
+      - gnome-mines
+      - gnome-sudoku
+      - gnome-terminal
+      - aisleriot
+      - gnome-calendar
+      - gnome-todo
+      - transmission
+      - simple-scan
+      - shotwell
+      - totem
+      - ristretto
+      - rhythmbox
+      - cheese
+      - orage
+      - pavucontrol
+      - xfburn
+      - hunspell-en-us
+    state: absent
+    purge: true
+
+- debug: 
+    msg: INFO clean system
+
+- name: 'Operating system: Upgrade all packages from offline mirror (ubuntu)'
+  ansible.builtin.apt:
+    upgrade: dist
+    state: latest
+    force_apt_get: true
+
+- name: 'Operating system: Remove useless packages from cache and dependencies'
+  ansible.builtin.apt:
+    autoclean: true
+    autoremove: true
+
+# TAT: step included. only keep ksm service
+- name: 'Operating system: Disable ksmtuned'
+  ansible.builtin.systemd:
+    name: ksmtuned
+    enabled: false
+    state: stopped
+
+# TAT: step included. enable qemu-guest-agent for faster remote desktop
+- name: 'Operating system: Enable qemu-guest-agent for faster remote desktop'
+  ansible.builtin.systemd:
+    name: qemu-guest-agent
+    enabled: true
+    state: started
+
+# TAT: step included. compose masks docker service
+- name: 'Operating system: Restore and restart docker service'
+  ansible.builtin.command: '{{ item }}'
+  loop:
+    - systemctl unmask docker.service
+    - systemctl unmask docker.socket
+    - systemctl start docker.service
+
+## STABILIZATION OF THE WORKING MEMORY, CPU UTILIZATION ON ALL CORES ----------------------------------------------#
+- debug: 
+    msg: INFO configure grub
+
+- name: 'Operating system: Set grub parameter'
+  ansible.builtin.shell: |
+    cat > /etc/default/grub <<_EOF_
+    GRUB_DEFAULT=0
+    GRUB_TIMEOUT_STYLE=hidden
+    GRUB_TIMEOUT=0
+    GRUB_DISTRIBUTOR=`lsb_release -i -s 2> /dev/null || echo Debian`
+    GRUB_CMDLINE_LINUX_DEFAULT=''
+    GRUB_CMDLINE_LINUX='quiet splash $vt_handoff'
+    _EOF_
+
+- name: 'Updating grub'
+  ansible.builtin.shell: update-grub
+
+- name: 'Remove execute permission from gnome-keyring-daemon'
+  ansible.builtin.command: chmod a-x /usr/bin/gnome-keyring-daemon

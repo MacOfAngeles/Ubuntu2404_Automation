@@ -1,0 +1,146 @@
+# -*- coding: utf-8 -*-
+##########################
+# Desktop configurations #
+##########################
+
+- debug: 
+    msg: '######### os_desktop ##########'  
+
+## Remove Desktop Icons and set Desktop to read only --------------------------------------------------------------#
+- debug: 
+    msg: INFO clean desktop icons
+
+- name: 'Operating system: Find desktop icons'
+  ansible.builtin.find:
+    paths: /home/docker_user/Desktop/
+    patterns: '*.desktop'
+  register: files_to_delete
+
+- name: 'Operating system: Remove desktop icons'
+  ansible.builtin.file:
+    path: '{{ item.path }}'
+    state: absent
+  loop: '{{ files_to_delete.files }}'
+
+## Set standard background ----------------------------------------------------------------------------------------#
+- name: 'Operating system: Find all XFCE background files'
+  ansible.builtin.find:
+    paths: /usr/share/backgrounds/xfce
+    patterns: '*'
+    file_type: file
+  register: files_to_replace
+
+- name: 'Operating system: Replace all backgrounds with generic wallpaper'
+  ansible.builtin.copy:
+    src: /workspace/configuration/background/default-wallpaper.jpg
+    dest: '{{ item.path }}'
+    remote_src: true
+  loop: '{{ files_to_replace.files }}'
+
+## Set power manager -----------------------------------------------------------------------------------------------#
+- name: 'Operating system: Disable screensaver on remote desktop for docker_user'
+  ansible.builtin.copy: 
+    src: '/workspace/configuration/power/.xscreensaver' 
+    dest: '/home/docker_user/.xscreensaver'
+    remote_src: true
+    force: true
+
+## Set xfce4 panel -------------------------------------------------------------------------------------------------#
+- name: 'Operating system: Kill the xfce4 configuration daemon'
+  ansible.builtin.command: 'pkill xfconfd'
+  ignore_errors: true
+  changed_when: false
+
+- name: 'Operating system: Delete xfce settings'
+  ansible.builtin.file:
+    state: absent
+    path: '/home/docker_user/.config/xfce4'
+
+- name: 'Operating system: Sync xfce4 config'
+  ansible.posix.synchronize:
+    src: /workspace/configuration/xfce4/
+    dest: /home/docker_user/.config/xfce4/
+  delegate_to: '{{ inventory_hostname }}'
+
+- name: 'Operating system: Fix ownership'
+  ansible.builtin.file:
+    path: '/home/docker_user/.config/xfce4'
+    owner: docker_user
+    group: users
+    mode: '0755'
+    recurse: true
+
+- name: 'Operating system: Enable XFCE autologin'
+  ansible.builtin.copy:
+    dest: /etc/lightdm/lightdm.conf.d/50-autologin.conf
+    content: |
+      [Seat:*]
+      autologin-user=docker_user
+      autologin-user-timeout=0
+      user-session=xfce
+
+- name: 'Operating system: Delete default launcher entries'
+  ansible.builtin.file:
+    path: '{{ item }}'
+    state: absent
+  loop:
+    - /usr/share/applications/xfce4-web-browser.desktop
+    - /usr/share/applications/exo-mail-reader.desktop
+
+## Manage Desktop Icons and System Menu -----------------------------------------------------------------------------#
+- name: 'Menu: Insert custom menu items'
+  ansible.builtin.blockinfile:
+    path: /etc/xdg/menus/xfce-applications.menu
+    marker: ''
+    insertbefore: '</menu>'
+    content: |2
+          <Menu>
+              <Name>Application START</Name>
+              <Directory>app-start.directory</Directory>
+              <Include>
+                  <Category>app-start</Category>
+              </Include>
+          </Menu>
+
+          <Menu>
+              <Name>Application STOP</Name>
+              <Directory>app-stop.directory</Directory>
+              <Include>
+                  <Category>app-stop</Category>
+              </Include>
+          </Menu>
+
+          <Menu>
+              <Name>Application TOOLS</Name>
+              <Directory>app-tools.directory</Directory>
+              <Include>
+                  <Category>app-tools</Category>
+              </Include>
+          </Menu>
+
+- name: 'Menu: Copy new menu icons'
+  ansible.posix.synchronize:
+    src: /workspace/software/menu/
+    dest: /usr/share/applications/custom/
+    delete: true
+  delegate_to: '{{ inventory_hostname }}'
+
+- name: 'Desktop: Change permission before operation of desktop'
+  ansible.builtin.file:
+    path: /home/docker_user/Desktop
+    state: directory
+    owner: docker_user
+    group: users
+    mode: '0755'
+
+- name: 'Desktop: Create desktop links (trusted)'
+  ansible.builtin.file:
+    src: /usr/share/applications/custom/Menu/app-start.desktop
+    dest: /home/docker_user/Desktop/app-start.desktop
+    state: link
+    owner: docker_user
+    group: users
+
+- name: 'Operating system: Change permissions of desktop for docker_user'
+  ansible.builtin.command: 'chmod 555 /home/docker_user/Desktop'
+  remote_user: docker_user

@@ -1,0 +1,28 @@
+# _*_ coding: utf-8 -*-
+##########################################################
+#    Main installation script of host Ubuntu 24.04 LTS   #
+##########################################################
+# 29.05.2026 - Mac Müller
+
+- name: 'Full installation'
+  hosts: all
+  become: true- name: 'Full installation'
+  hosts: all
+  become: true
+
+  roles:
+      - { role: os_start_installation, tags: ['init'] }
+      - { role: os_app_and_mirror, tags: ['app'] }
+      - { role: os_ntp, tags: ['ntp', 'network'] }
+      - { role: os_dns, tags: ['dns', 'network'] }
+      - { role: os_fstab, tags: ['mont'] }
+      - { role: os_users, tags: ['users'] }
+      - { role: os_mount_folders, tags: ['mount'] }
+      - { role: os_ssh, tags: ['ssh'] }
+      - { role: os_vnc4server, tags: ['vnc'] }
+      - { role: os_desktop, tags: ['desktop'] }
+      - { role: os_plf, tags: ['system'] }
+      - { role: os_certificates, tags: ['certificates'] }
+      - { role: os_firefox, tags: ['firefox'] }
+      - { role: ve_patching, tags: ['patching'] }
+      - { role: os_reboot, tags: ['reboot'] }

@@ -1,0 +1,196 @@
+# -*- coding: utf-8 -*-
+#########################################
+# Installation of operating simulations #
+#########################################
+
+- debug: 
+    msg: '######### os_patching ##########' 
+
+## cleanup data ----------------------------------------------------------------------------------------------------#
+## Do not use Regex -> more convenient for specific edit 
+- name: 'Operating system: Delete folder with old data'
+  ansible.builtin.file:
+    path: '{{ item }}'
+    state: absent
+  loop:
+    - '/vm/tools/tool_a'
+    - '/vm/tools/tool_b'
+    - '/vm/tools/security'
+    - '/vm/nodes/by-group'
+    - '/vm/nodes/archive'
+    - '/vm/env/templates'
+    - '/vm/lab/node00'
+    - '/vm/lab/node01'
+    - '/vm/lab/node02'
+    - '/vm/lab/node03'
+    - '/vm/lab/node04'
+    - '/vm/lab/node05'
+    - '/vm/lab/node06'
+    - '/vm/lab/node07'
+    - '/vm/lab/node08'
+    - '/vm/lab/node09'
+    - '/vm/config'
+    - '/data/project/env/transfer/tools'
+
+- name: 'Operating system: Delete folder with legacy tools'
+  ansible.builtin.file:
+    path: '{{ item }}'
+    state: absent
+  loop:
+    - '/vm/node00'
+    - '/vm/node01'
+    - '/vm/node02'
+    - '/vm/node03'
+    - '/vm/node04'
+    - '/vm/node05'
+    - '/vm/node06'
+    - '/vm/node07'
+    - '/vm/node08'
+    - '/vm/node09'
+    - '/vm/tools/legacy_tool'
+    - '/home/docker_user/bin'
+
+- name: 'Operating system: Create folder'
+  ansible.builtin.file:
+    path: '{{ item }}'
+    state: directory
+    mode: '0775'
+  loop:
+    - '/vm/tools/tool_a'
+    - '/vm/tools/tool_b'
+    - '/vm/tools/security'
+    - '/vm/lab'
+    - '/vm/lab/node00'
+    - '/vm/lab/node01'
+    - '/vm/lab/node02'
+    - '/vm/lab/node03'
+    - '/vm/lab/node04'
+    - '/vm/lab/node05'
+    - '/vm/lab/node06'
+    - '/vm/lab/node07'
+    - '/vm/lab/node08'
+    - '/vm/lab/node09'
+    - '/vm/lab/app/config'
+    - '/vm/nodes/by-group/node00'
+    - '/vm/nodes/by-group/node01'
+    - '/vm/nodes/by-group/node02'
+    - '/vm/nodes/by-group/node03'
+    - '/vm/nodes/by-group/node04'
+    - '/vm/nodes/by-group/node05'
+    - '/vm/nodes/by-group/node06'
+    - '/vm/nodes/by-group/node07'
+    - '/vm/nodes/by-group/node08'
+    - '/vm/nodes/by-group/node09'
+    - '/data/project/env/transfer/tools'
+    - '/data/project/env/transfer/tools/tool_a'
+    - '/data/project/env/transfer/tools/tool_b'
+
+## Update UI and services -----------------------------------------------------------------------------------------#
+- name: 'Update UI: Remove old releases if exist'
+  ansible.builtin.file:
+    path: '/home/docker_user/{{ item }}'
+    state: absent
+  loop: [app-ui, service]
+
+- name: 'Update UI: Unpack new release {{ app_ui_new }}'
+  ansible.builtin.unarchive:
+    src: '/workspace/software/ui/{{ app_ui_new }}.tar.gz'
+    dest: '/home/docker_user/'
+    mode: '0775'
+    owner: docker_user
+    group: users
+
+## Update test tools -----------------------------------------------------------------------------------------------#
+- name: 'Tools: Remove old directories in /vm/tools'
+  ansible.builtin.file:
+    path: '/vm/tools/{{ item }}'
+    state: absent
+  loop: [git, testsuite]
+
+- name: 'Tools: Create new directory in /vm/lab/app/'
+  ansible.builtin.file:
+    path: '/vm/lab/app/testsuite'
+    state: directory
+    mode: '0775'
+  
+- name: 'Tools: Create node directories'
+  ansible.builtin.file:
+    path: '/vm/lab/app/testsuite/{{ item }}'
+    state: directory
+    mode: '0775'
+  loop: [node00, node01, node02, node03, node04, node05, node06, node07, node08, node09, git]
+
+- name: 'Tools: Create subdirectories'
+  ansible.builtin.file:
+    path: '/vm/lab/app/testsuite/{{ item.0 }}/{{ item.1 }}'
+    state: directory
+    mode: '0775'
+  with_nested:
+    - ['node00','node01','node02','node03','node04','node05','node06','node07','node08','node09']
+    - ['config','log','meta']
+
+## Update tool packages --------------------------------------------------------------------------------------------#
+- name: 'Tools: Copy new tool_a package'
+  ansible.builtin.copy: 
+    src: '/workspace/software/tool_a/{{ tool_a_new }}.tgz' 
+    dest: '/data/project/env/transfer/tools/tool_a/{{ tool_a_new }}.tgz'
+
+- name: 'Tools: Copy new tool_b package'
+  ansible.builtin.copy: 
+    src: '/workspace/software/tool_b/{{ tool_b_new }}.tgz' 
+    dest: '/data/project/env/transfer/tools/tool_b/{{ tool_b_new }}.tgz'
+
+- name: 'Operating system: Copy simulation package'
+  ansible.builtin.copy: 
+    src: '/workspace/software/security/simulation.jar' 
+    dest: '/vm/tools/security/simulation.jar'
+
+- name: 'Tools: Transfer configuration files'
+  ansible.builtin.copy: 
+    src: '/workspace/config/app_config/' 
+    dest: '/vm/env/templates/'
+    mode: '0755'
+
+## Update toolkit --------------------------------------------------------------------------------------------------#
+- name: 'Update toolkit: Remove old releases if exist'
+  ansible.builtin.file:
+    path: '/vm/tools/{{ item }}'
+    state: absent
+  loop:
+    - toolkit-v0.1
+    - toolkit-v0.2
+    - toolkit-v0.3
+    - toolkit-v0.4
+    - toolkit-v0.5
+
+- name: 'Update toolkit: Unpack new release {{ toolkit_new }}'
+  ansible.builtin.unarchive:
+    src: '/workspace/software/toolkit/{{ toolkit_new }}.tar.gz'
+    dest: '/vm/tools/'
+    mode: '0775'
+
+- name: 'Update toolkit: Set link to new release {{ toolkit_new }}'
+  ansible.builtin.file:
+    src: '{{ toolkit_new }}'
+    dest: '/vm/tools/toolkit'
+    state: link
+
+## Patchsystem -----------------------------------------------------------------------------------------------------#
+- name: 'Patching: Remove old patch folder if exist'
+  ansible.builtin.file:
+    path: '/vm/tools/patch'
+    state: absent
+
+- name: 'Patching: Transfer patch for container'
+  ansible.builtin.copy: 
+    src: '/workspace/software/patchsystem/latest/patch/' 
+    dest: '/vm/tools/patch/'
+    mode: '0755'
+
+- name: 'Patching: Set ownership for simulation'
+  ansible.builtin.file:
+    path: '{{ item }}'
+    owner: docker_user
+    group: users
+    recurse: true
+  loop: [/data, /vm]

@@ -1,0 +1,38 @@
+# -*- coding: utf-8 -*-
+#######################
+# FSTAB configuration #
+#######################
+
+- debug: 
+    msg: '######### os_fstab ##########' 
+
+  ## FSTAB --------------------------------------------------------------------------------------------------------#
+- debug: 
+    msg: INFO prepare fstab
+
+- name: 'Operating system: Delete all after ansible block if exits (fix old file)'
+  ansible.builtin.replace:
+    path: /etc/fstab
+    regexp: '# BEGIN((.|\n)*)'
+    replace: ''
+
+- name: 'Operating system: Delete all empty lines if exits (fix old file)'
+  ansible.builtin.lineinfile:
+    path: /etc/fstab
+    regexp: '^$'
+    state: absent   
+
+- name: 'Operating system: Add an empty line (fix old file)'
+  ansible.builtin.lineinfile:
+    path: /etc/fstab
+    line: ''  
+
+- name: 'Operating system: Set marker in fstab'
+  ansible.builtin.blockinfile:
+    path: /etc/fstab
+    marker_begin: 'BEGIN'
+    marker_end: 'END'
+    content: |
+      ## GENERIC MOUNTPOINT ##
+      {{ fstab_el2 }}
+      {{ fstab_ve2 }}

@@ -1,0 +1,11 @@
+
+# -*- coding: utf-8 -*-
+######################
+# Start installation #
+######################
+
+- ansible.builtin.debug:
+    msg: '######### os_start_installation #########'
+
+- ansible.builtin.debug:
+    msg: 'INFO Welcome, starting host setup at {{ date }}'

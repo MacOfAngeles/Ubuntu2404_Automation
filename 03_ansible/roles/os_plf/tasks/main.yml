@@ -1,0 +1,80 @@
+# -*- coding: utf-8 -*-
+#############################
+# System plf configurations #
+#############################
+
+- debug: 
+    msg: '######### os_plf ##########'
+
+## set config and script files --------------------------------------------------------------------------------#
+- name: 'Operating system: Transfer config files'
+  ansible.builtin.copy:
+    src: '{{ remote_path }}/{{ network }}/files/'
+    dest: '/'
+    mode: '0644'
+    directory_mode: '0755'
+
+- name: 'Operating system: Transfer script files'
+  ansible.builtin.copy:
+    src: '{{ remote_path }}/{{ network }}/files_exec/'
+    dest: '/'
+    mode: '0755'
+
+- name: 'Operating system: Transfer additional script files'
+  ansible.builtin.copy:
+    src: '{{ remote_path }}/{{ network }}/files_extra/'
+    dest: '/'
+    mode: '0755'
+
+- name: 'Operating system: Remove remmina directory completely'
+  ansible.builtin.file:
+    path: '{{ local_remmina_path }}'
+    state: absent
+
+- name: 'Operating system: Recreate remmina directory'
+  ansible.builtin.file:
+    path: '{{ local_remmina_path }}'
+    state: directory
+    owner: docker_user
+    group: users
+    mode: '0755'
+
+- name: 'Operating system: Copy remmina profiles'
+  ansible.builtin.copy:
+    src: '{{ remote_path }}/remmina/'
+    dest: '{{ local_remmina_path }}'
+    owner: docker_user
+    group: users
+    mode: '0755'
+
+- name: 'Operating system: Transfer application configuration file'
+  ansible.builtin.copy: 
+    src: '/workspace/configuration/app.cfg' 
+    dest: '/vm/app.cfg'
+  remote_user: docker_user
+  become: false
+
+- name: 'Operating system: Ensure destination directory exists'
+  ansible.builtin.file:
+    path: '/usr/share/applications/custom/'
+    state: directory
+    mode: '0755'
+  
+- name: 'Menu: Copy menu entries'
+  ansible.posix.synchronize:
+    src: '/workspace/configuration/menu/'
+    dest: '/usr/share/applications/custom/'
+    delete: true
+  delegate_to: '{{ inventory_hostname }}'  
+
+## Add rc.local ---------------------------------------------------------------------------------------------------#
+- debug: 
+    msg: INFO set up rc.local
+
+- name: 'Operating system: Copy rc.local file'
+  ansible.builtin.copy:
+    src: '/workspace/configuration/os/rc.local'
+    dest: '/etc/'
+    remote_src: true
+    force: true
+    mode: '0755'
