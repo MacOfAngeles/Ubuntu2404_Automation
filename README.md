@@ -30,6 +30,6 @@ Supports deployment in two network segments with fully automatic configuration a
 2. Perform the automated installation using cloud-init
 3. Log in with the user account: tool
 4. Run sudo /init/init.py to configure the hostname and IP address
-5. Execute the Ansible playbook 03_ansible/readme.md
+5. Execute the Ansible playbook [readme.de ansible](https://github.com/MacOfAngeles/Ubuntu2404_Automation/blob/main/03_ansible/README.md)
 
 The installation is complete and the system is ready to use
