@@ -143,4 +143,3 @@
 
 - name: 'Operating system: Change permissions of desktop for docker_user'
   ansible.builtin.command: 'chmod 555 /home/docker_user/Desktop'
-  remote_user: docker_user
