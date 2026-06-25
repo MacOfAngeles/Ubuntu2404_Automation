@@ -6,8 +6,7 @@ The system is intended to run dockers for train signalings environments in Switz
 
 Supports deployment in two network segments with fully automatic configuration and no manual handling required.
 
-
-<img width="1266" height="606" alt="451425445-8441bc7a-ecab-4555-b615-0ce1d9ff8904" src="https://github.com/user-attachments/assets/16b6e847-3150-4a3c-931a-0ddca346945f" />
+<img width="1897" height="1100" alt="d7fac16d-005a-4820-9322-4fefdf54fd0a" src="https://github.com/user-attachments/assets/b36dc9a3-ae53-4d15-b75f-d8c5596132b2" />
 
 ## Steps and Information
 1. Offline Ubuntu Noble 24.04 Zero-Touch Installation with cloud-init
