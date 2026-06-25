@@ -89,7 +89,7 @@ if __name__ == "__main__":
                     "addresses": [f"{ip}/{prefix}"],
                     "routes": [{"to": "default", "via": ip_gateway}],
                     "nameservers": {
-                        "search": ["RSSLAB.local"],
+                        "search": ["DOMAIN.local"],
                         "addresses": [ip_dns]
                     }
                 }
