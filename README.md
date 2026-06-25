@@ -24,12 +24,12 @@ Supports deployment in two network segments with fully automatic configuration a
 
 ## 🛠Usage Guide
 1. Variables for configurations
-    - 01_ubuntu_user_data.txt (IP address for mirror, password)
-    - 02_init_py (DNS address)
-    - 03_ansible/group_vars/all.yml (all ansible variables)
+    - user_data (IP address for mirror, password)
+    - init_py (DNS address, Domain)
+    - ansible/group_vars/all.yml (all ansible variables)
 2. Perform the automated installation using cloud-init
 3. Log in with the user account: tool
 4. Run sudo /init/init.py to configure the hostname and IP address
-5. Execute the Ansible playbook [readme.de ansible](https://github.com/MacOfAngeles/Ubuntu2404_Automation/tree/main/03_ansible)
+5. Execute the Ansible playbook [readme.de ansible](https://github.com/MacOfAngeles/Ubuntu2404_Automation/tree/main/ansible)
 
 The installation is complete and the system is ready to use
